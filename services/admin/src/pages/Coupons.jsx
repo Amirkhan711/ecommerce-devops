@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { couponAPI } from '../api/coupons';
 import { useToast } from '../context/ToastContext';
 import './Users.css';
@@ -10,21 +10,21 @@ function Coupons() {
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ code: '', discountType: 'percentage', value: '', expirationDate: '', usageLimit: '' });
 
-    useEffect(() => {
-        fetchCoupons();
-    }, []);
-
-    const fetchCoupons = async () => {
+    const fetchCoupons = useCallback(async () => {
         try {
             setLoading(true);
             const response = await couponAPI.getAll();
             setCoupons(response.data);
-        } catch (error) {
+        } catch {
             // console.error(error);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchCoupons();
+    }, [fetchCoupons]);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -33,7 +33,7 @@ function Coupons() {
             toast.success('Coupon created');
             setShowModal(false);
             fetchCoupons();
-        } catch (error) {
+        } catch {
             toast.error('Failed to create coupon');
         }
     };
@@ -44,10 +44,20 @@ function Coupons() {
             await couponAPI.delete(id);
             toast.success('Coupon deleted');
             fetchCoupons();
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete coupon');
         }
     };
+
+    if (loading) {
+        return (
+            <div className="users-page">
+                <div className="loading-state">
+                    <p>Loading coupons...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="users-page">

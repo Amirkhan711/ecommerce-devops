@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../context/ToastContext';
 import { productAPI } from '../api/products';
 import './Users.css'; // Reuse Users styles for consistency
@@ -21,11 +21,7 @@ function Products() {
         image_url: ''
     });
 
-    useEffect(() => {
-        fetchProducts();
-    }, []);
-
-    const fetchProducts = async () => {
+    const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
             const response = await productAPI.getAll();
@@ -37,7 +33,11 @@ function Products() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
 
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -66,7 +66,7 @@ function Products() {
             }
             fetchProducts();
             setFormData({ name: '', description: '', price: '', category: '', stock: '', image_url: '' });
-        } catch (error) {
+        } catch {
             toast.error('Operation failed');
         }
     };
@@ -77,7 +77,7 @@ function Products() {
             await productAPI.delete(id);
             toast.success('Product deleted');
             fetchProducts();
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete');
         }
     };

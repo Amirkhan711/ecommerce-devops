@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../context/ToastContext';
 import { adminAPI } from '../api/client';
 import './Users.css';
@@ -22,20 +22,7 @@ function Users() {
         role: 'user'
     });
 
-    // Fetch users on mount and when window regains focus
-    useEffect(() => {
-        fetchUsers();
-
-        const handleFocus = () => {
-            console.log('Window focused - refreshing users');
-            fetchUsers();
-        };
-
-        window.addEventListener('focus', handleFocus);
-        return () => window.removeEventListener('focus', handleFocus);
-    }, []);
-
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             setLoading(true);
             const response = await adminAPI.getUsers();
@@ -49,7 +36,20 @@ function Users() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [toast]);
+
+    // Fetch users on mount and when window regains focus
+    useEffect(() => {
+        fetchUsers();
+
+        const handleFocus = () => {
+            console.log('Window focused - refreshing users');
+            fetchUsers();
+        };
+
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [fetchUsers]);
 
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,7 +133,7 @@ function Users() {
             toast.success(`${selectedUsers.length} user(s) deleted successfully`);
             setSelectedUsers([]);
             fetchUsers();
-        } catch (error) {
+        } catch {
             toast.error('Failed to delete some users');
         }
     };

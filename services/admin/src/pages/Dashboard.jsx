@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../context/ToastContext';
 import { analyticsAPI } from '../api/analytics';
 import { adminAPI } from '../api/client';
@@ -17,11 +17,7 @@ function Dashboard() {
     const [recentUsers, setRecentUsers] = useState([]);
     const [recentActivity, setRecentActivity] = useState([]);
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const [statsRes, usersRes, eventsRes] = await Promise.all([
@@ -57,7 +53,11 @@ function Dashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [toast]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handleQuickAction = (action) => {
         if (action === 'Refresh') {
