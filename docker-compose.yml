@@ -20,10 +20,6 @@ services:
       retries: 3
       start_period: 40s
     depends_on:
-      frontend:
-        condition: service_healthy
-      admin:
-        condition: service_healthy
       catalog:
         condition: service_healthy
       order-payment:
