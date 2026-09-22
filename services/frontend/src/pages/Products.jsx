@@ -10,25 +10,31 @@ function Products() {
     const { addToCart } = useCart();
 
     useEffect(() => {
-        fetchProducts();
-    }, []);
+        let isMounted = true;
+        const fetchProducts = async () => {
+            try {
+                setLoading(true);
+                const response = await productAPI.getAll();
+                const productsData = response.data.data || response.data || [];
+                if (isMounted) {
+                    setProducts(Array.isArray(productsData) ? productsData : []);
+                    setLoading(false);
+                }
+            } catch (err) {
+                console.error('Failed to fetch products:', err);
+                if (isMounted) {
+                    setProducts([]);
+                    setLoading(false);
+                }
+            }
+        };
 
-    const fetchProducts = async () => {
-        try {
-            setLoading(true);
-            const response = await productAPI.getAll();
-            // Backend returns { success: true, data: [...products] }
-            // So products are at response.data.data
-            const productsData = response.data.data || response.data || [];
-            setProducts(Array.isArray(productsData) ? productsData : []);
-            setLoading(false);
-        } catch (err) {
-            console.error('Failed to fetch products:', err);
-            // Fallback for demo purposes if backend isn't populated or running
-            setProducts([]);
-            setLoading(false);
-        }
-    };
+        fetchProducts();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const categories = [
         { id: 'all', name: 'All Products' },

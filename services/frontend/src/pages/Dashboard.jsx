@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { userAPI } from '../api/client';
 import { orderAPI } from '../api/orders';
@@ -15,20 +15,7 @@ function Dashboard() {
         lastName: ''
     });
 
-    useEffect(() => {
-        const loadData = async () => {
-            await Promise.all([fetchProfile(), fetchOrders()]);
-            setLoading(false);
-        };
-        loadData();
-    }, []);
-
-    const fetchOrders = async () => {
-        // Assuming user.id is available from AuthContext. If not, profile request usually returns it.
-        // We'll use a fallback or wait for profile if needed, but let's try assuming 'user' object has ID.
-        // If 'user' from context is null (initially), this might fail. 
-        // Best to use the ID from the profile response or ensure user is loaded.
-        // For now, let's assume we can get it after profile fetch or straight from context if stable.
+    const fetchOrders = useCallback(async () => {
         if (user && user.id) {
             try {
                 const res = await orderAPI.getUserOrders(user.id);
@@ -37,9 +24,9 @@ function Dashboard() {
                 console.error('Failed to fetch orders', err);
             }
         }
-    };
+    }, [user]);
 
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async () => {
         try {
             const response = await userAPI.getProfile();
             setProfile(response.data.data);
@@ -47,7 +34,6 @@ function Dashboard() {
                 firstName: response.data.data.firstName || '',
                 lastName: response.data.data.lastName || ''
             });
-            // If we didn't have user ID before, we definitely have it now.
             if (response.data.data.id && (!user || !user.id)) {
                 try {
                     const res = await orderAPI.getUserOrders(response.data.data.id);
@@ -59,7 +45,21 @@ function Dashboard() {
         } catch (error) {
             console.error('Failed to fetch profile:', error);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadData = async () => {
+            await Promise.all([fetchProfile(), fetchOrders()]);
+            if (isMounted) {
+                setLoading(false);
+            }
+        };
+        loadData();
+        return () => {
+            isMounted = false;
+        };
+    }, [fetchProfile, fetchOrders]);
 
     const handleUpdate = async (e) => {
         e.preventDefault();

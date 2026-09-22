@@ -9,21 +9,30 @@ function Orders() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user) {
-            fetchOrders();
-        }
-    }, [user]);
+        if (!user) return;
 
-    const fetchOrders = async () => {
-        try {
-            const res = await orderAPI.getOrders(user.id);
-            setOrders(res.data);
-            setLoading(false);
-        } catch (err) {
-            console.error('Failed to fetch orders', err);
-            setLoading(false);
-        }
-    };
+        let isMounted = true;
+        const fetchOrders = async () => {
+            try {
+                const res = await orderAPI.getOrders(user.id);
+                if (isMounted) {
+                    setOrders(res.data);
+                    setLoading(false);
+                }
+            } catch (err) {
+                console.error('Failed to fetch orders', err);
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchOrders();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user]);
 
     if (loading) return <div className="loading-container">Loading orders...</div>;
 
