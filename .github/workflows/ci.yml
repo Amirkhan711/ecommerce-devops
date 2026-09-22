@@ -4,33 +4,105 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build:
+  # ─────────────────────────────────────────────
+  # Job 1: Frontend CI (React + Vite)
+  # Steps: install → lint → build
+  # ─────────────────────────────────────────────
+  frontend:
+    name: Frontend CI
     runs-on: ubuntu-latest
 
     steps:
-      # GitHub repository ka code runner mein checkout karta hai
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Node.js environment setup karta hai
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: services/frontend/package-lock.json
 
-      # Frontend directory mein dependencies install karta hai
-      - name: Install frontend dependencies
+      - name: Install dependencies
         working-directory: ./services/frontend
         run: npm ci
 
-      # Frontend code ka lint check karta hai
-      - name: Lint frontend
+      - name: Lint
         working-directory: ./services/frontend
         run: npm run lint
 
-      # Frontend ka production build create/check karta hai
-      - name: Build frontend
+      - name: Build
         working-directory: ./services/frontend
         run: npm run build
+
+  # ─────────────────────────────────────────────
+  # Job 2: Admin CI (React + Vite)
+  # Steps: install → lint → build
+  # ─────────────────────────────────────────────
+  admin:
+    name: Admin CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: services/admin/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./services/admin
+        run: npm ci
+
+      - name: Lint
+        working-directory: ./services/admin
+        run: npm run lint
+
+      - name: Build
+        working-directory: ./services/admin
+        run: npm run build
+
+  # ─────────────────────────────────────────────
+  # Job 3: Backend Services CI (Node.js/Express)
+  # Matrix strategy: one job per backend service
+  # Step: npm ci only (no test files exist yet)
+  # ─────────────────────────────────────────────
+  backend:
+    name: Backend CI - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - catalog
+          - user-auth
+          - order-payment
+          - fulfillment
+          - inventory
+          - shopping
+          - platform
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+
+      - name: Install dependencies (${{ matrix.service }})
+        working-directory: ./services/${{ matrix.service }}
+        run: npm ci
