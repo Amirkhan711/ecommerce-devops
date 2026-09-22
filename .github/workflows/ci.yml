@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # GitHub repository ka code runner mein checkout karta hai
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Node.js environment setup karta hai
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Frontend directory mein dependencies install karta hai
+      - name: Install frontend dependencies
+        working-directory: ./services/frontend
+        run: npm ci
+
+      # Frontend code ka lint check karta hai
+      - name: Lint frontend
+        working-directory: ./services/frontend
+        run: npm run lint
+
+      # Frontend ka production build create/check karta hai
+      - name: Build frontend
+        working-directory: ./services/frontend
+        run: npm run build
