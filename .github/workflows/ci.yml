@@ -111,3 +111,30 @@ jobs:
         if: matrix.service == 'user-auth'
         working-directory: ./services/${{ matrix.service }}
         run: npm test -- --runInBand
+
+  # ─────────────────────────────────────────────
+  # Job 4: Docker Build — user-auth
+  # Proves the Dockerfile builds successfully.
+  # Image is tagged with the Git commit SHA.
+  # Image is NOT pushed to any registry yet.
+  # ─────────────────────────────────────────────
+  docker-build-user-auth:
+    name: Docker Build - user-auth
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/user-auth
+          file: ./services/user-auth/Dockerfile
+          push: false
+          tags: user-auth:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
