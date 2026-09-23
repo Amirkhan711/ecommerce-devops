@@ -106,3 +106,8 @@ jobs:
       - name: Install dependencies (${{ matrix.service }})
         working-directory: ./services/${{ matrix.service }}
         run: npm ci
+
+      - name: Run Jest tests
+        if: matrix.service == 'user-auth'
+        working-directory: ./services/${{ matrix.service }}
+        run: npm test -- --runInBand
